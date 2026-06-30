@@ -1,0 +1,9 @@
+name: foundry-hosted-agent
+
+services:
+  api:
+    project: .
+    language: py
+    host: containerapp
+    docker:
+      path: ./Dockerfile
