@@ -2,25 +2,15 @@
 
 A REST API that wraps your Azure AI Foundry Prompt Agent, built with FastAPI.
 
-### Prerequisites
+---
 
-See `install.sh` for one-time setup (Python 3.13+, Azure Developer CLI, Foundry extension).
+### Run locally
 
-You also need to be logged in to Azure:
-
-```bash
-az login
-```
-
-### Setup
-
-1. Copy the example env file and fill in your values:
+1. Copy the example env file:
 
 ```bash
 cp .env.example .env
 ```
-
-The defaults already point to the `jubinsoni-9036` Foundry project and the `helpful-ai-agent:1` agent.
 
 2. Start the server:
 
@@ -28,7 +18,45 @@ The defaults already point to the `jubinsoni-9036` Foundry project and the `help
 ./run.sh
 ```
 
-The API will be available at `http://localhost:8000`.
+API available at `http://localhost:8000`. Swagger UI at `http://localhost:8000/docs`.
+
+---
+
+### Deploy to Azure (Container Apps)
+
+This gives you a real public HTTPS URL. The container scales to zero when idle, so **cost is ~$0 when not in use**.
+
+**Prerequisites:** `azd` CLI + Docker Desktop running.
+
+**One-time setup:**
+
+```bash
+azd auth login
+azd env new foundry-agent-prod
+azd env set AZURE_EXISTING_AIPROJECT_ENDPOINT https://jubinsoni-9036-resource.services.ai.azure.com/api/projects/jubinsoni-9036
+azd env set AZURE_EXISTING_AGENT_ID helpful-ai-agent:1
+```
+
+**Deploy:**
+
+```bash
+azd up
+```
+
+`azd` will:
+1. Build the Docker image from `Dockerfile`
+2. Push it to Azure Container Registry
+3. Provision a Container Apps environment + managed identity
+4. Deploy the container with your Foundry env vars injected
+5. Print your public URL when done
+
+**Tear down everything (stops all charges):**
+
+```bash
+azd down
+```
+
+---
 
 ### Endpoints
 
@@ -38,48 +66,19 @@ The API will be available at `http://localhost:8000`.
 | GET | `/agent-info` | Shows configured endpoint and agent |
 | POST | `/chat` | Send a message to the Foundry agent |
 
-### Chat request
+**Chat example:**
 
 ```bash
-curl -X POST http://localhost:8000/chat \
+curl -X POST https://YOUR-APP-URL/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "What can you help me with?"}'
 ```
 
-Optional — override the system prompt for one call:
-
-```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello", "system_prompt": "Respond only in haiku."}'
-```
-
-### Interactive API docs
-
-FastAPI ships a built-in Swagger UI at:
-
-```
-http://localhost:8000/docs
-```
+---
 
 ### Environment variables
 
 | Variable | Description |
 |----------|-------------|
 | `AZURE_EXISTING_AIPROJECT_ENDPOINT` | Your Foundry project endpoint URL |
-| `AZURE_EXISTING_AGENT_ID` | Agent name and version in `name:version` format |
-
-### Deploying to Azure
-
-To wrap this in a web app and deploy to Azure, run from this directory:
-
-```bash
-azd init -t https://github.com/Azure-Samples/get-started-with-ai-agents
-azd up
-```
-
-To tear down:
-
-```bash
-azd down
-```
+| `AZURE_EXISTING_AGENT_ID` | Agent name and version (`name:version`) |
