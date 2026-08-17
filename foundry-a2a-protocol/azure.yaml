@@ -1,0 +1,9 @@
+name: foundry-a2a-protocol
+
+services:
+  specialist:
+    project: .
+    language: py
+    host: containerapp
+    docker:
+      path: ./Dockerfile
